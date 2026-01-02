@@ -1,8 +1,9 @@
 import pm4py
 from ocelescope import OCEL, DirectlyFollowsGraph
 from ocelescope.resource.default.dfg import (
-    Edge,
-    ObjectActivityEdge,
+    DFGActivity,
+    DFGEdge,
+    DFGObject,
 )
 
 
@@ -18,7 +19,7 @@ def compute_ocdfg(ocel: OCEL) -> DirectlyFollowsGraph:
     for object_type, raw_edges in ocdfg["edges"]["event_couples"].items():
         edges = edges + (
             [
-                Edge(
+                DFGEdge(
                     object_type=object_type,
                     source=source,
                     target=target,
@@ -28,27 +29,25 @@ def compute_ocdfg(ocel: OCEL) -> DirectlyFollowsGraph:
         )
 
     start_activity_edges = [
-        ObjectActivityEdge(
+        DFGEdge(
             object_type=object_type,
-            activity=activity,
+            source=activity,
         )
         for object_type, activities in ocdfg["start_activities"]["events"].items()
         for activity in activities.keys()
     ]
 
     end_activity_edges = [
-        ObjectActivityEdge(
+        DFGEdge(
+            source=activity,
             object_type=object_type,
-            activity=activity,
         )
         for object_type, activities in ocdfg["end_activities"]["events"].items()
         for activity in activities.keys()
     ]
 
     return DirectlyFollowsGraph(
-        activities=ocdfg["activities"],
-        edges=edges,
-        object_types=ocdfg["object_types"],
-        end_activities=end_activity_edges,
-        start_activities=start_activity_edges,
+        activities=[DFGActivity(name=activity) for activity in ocdfg["activities"]],
+        edges=edges + start_activity_edges + end_activity_edges,
+        object_types=[DFGObject(name=object_type) for object_type in ocdfg["object_types"]],
     )

@@ -107,7 +107,6 @@ def convert_flat_pm4py_to_ocpn(flat_nets: dict[str, PMNet], tbr_results: TBRResu
                 Arc(
                     source=source_id,
                     target=target_id,
-                    variable=False,
                 )
             )
 
