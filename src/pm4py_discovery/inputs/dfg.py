@@ -1,7 +1,7 @@
 from ocelescope import OCEL_FIELD, PluginInput
 
 
-class DFGInput(PluginInput, frozen=True):
+class DFGInput(PluginInput):
     excluded_event_types: list[str] = OCEL_FIELD(title="Excluded Activities", field_type="event_type", ocel_id="ocel")
 
     excluded_object_types: list[str] = OCEL_FIELD(

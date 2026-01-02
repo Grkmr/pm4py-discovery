@@ -7,7 +7,7 @@ from pm4py.objects.petri_net.obj import PetriNet as PMNet
 from pydantic.fields import Field
 
 
-class PetriNetInput(PluginInput, frozen=True):
+class PetriNetInput(PluginInput):
     variant: Literal["im", "imd"] = Field(
         title="Mining Variant",
         description="Variant of the inductive miner to use (“im” for traditional;"
@@ -81,7 +81,6 @@ def convert_flat_pm4py_to_ocpn(flat_nets: dict[str, PMNet]) -> PetriNet:
 
     # Assemble the final Petri net and OCPN
     return PetriNet(
-        type="ocpn",
         places=place_set,
         transitions=list(transition_map.values()),
         arcs=arcs,

@@ -4,7 +4,7 @@ from ocelescope import OCEL_FIELD, PluginInput
 from pydantic import Field
 
 
-class PetriNetInput(PluginInput, frozen=True):
+class PetriNetInput(PluginInput):
     variant: Literal["im", "imd"] = Field(
         title="Mining Variant",
         description="Variant of the inductive miner to use (“im” for traditional;"
