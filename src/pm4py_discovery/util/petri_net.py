@@ -1,10 +1,13 @@
+from dataclasses import dataclass
 from typing import Literal
 
 from ocelescope import PetriNet
 from ocelescope.plugin import OCEL_FIELD, PluginInput
-from ocelescope.resource.default.petri_net import Arc, Place, Transition
+from ocelescope.resource.default.petri_net import Annotated, Arc, Place, Transition
 from pm4py.objects.petri_net.obj import PetriNet as PMNet
 from pydantic.fields import Field
+
+from ..resources import TokenBasedReplayResult
 
 
 class PetriNetInput(PluginInput):
@@ -25,10 +28,38 @@ class PetriNetInput(PluginInput):
     )
 
 
-def convert_flat_pm4py_to_ocpn(flat_nets: dict[str, PMNet]) -> PetriNet:
+@dataclass
+class TBRResult:
+    place_results: dict[tuple[str, str], TokenBasedReplayResult]
+    arc_results: dict[tuple[str, str], int]
+
+
+def extract_tbr_results(tbr_results: dict[str, tuple[dict, dict]]) -> TBRResult:
+    place_results: dict[tuple[str, str], TokenBasedReplayResult] = {}
+    arc_results: dict[tuple[str, str], int] = {}
+
+    for object_type, place_result in tbr_results.items():
+        place_results = place_results | {
+            (object_type, place_name.name): TokenBasedReplayResult(
+                produced=tbr_dict["p"], consumed=tbr_dict["c"], remaining=tbr_dict["r"], missing=tbr_dict["m"]
+            )
+            for place_name, tbr_dict in place_result[0].items()
+        }
+
+        arc_results = arc_results | {
+            (object_type, transition.label if transition.label else transition.name): sync_moves
+            for transition, sync_moves in place_result[1].items()
+        }
+
+    return TBRResult(place_results=place_results, arc_results=arc_results)
+
+
+def convert_flat_pm4py_to_ocpn(flat_nets: dict[str, PMNet], tbr_results: TBRResult | None = None) -> PetriNet:
     place_set: list[Place] = []
     transition_map: dict[str, Transition] = {}
     arcs: list[Arc] = []
+
+    tbr_results = tbr_results or TBRResult(place_results={}, arc_results={})
 
     seen_places: set[str] = set()
 
@@ -43,6 +74,7 @@ def convert_flat_pm4py_to_ocpn(flat_nets: dict[str, PMNet]) -> PetriNet:
                         id=qualified_id,
                         place_type="source" if place.name == "source" else "sink" if place.name == "sink" else None,
                         object_type=object_type,
+                        annotation=tbr_results.place_results.get((object_type, place.name), None),
                     )
                 )
                 seen_places.add(qualified_id)

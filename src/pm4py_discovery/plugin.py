@@ -9,13 +9,15 @@ from ocelescope import (
     OCELAnnotation,
     PetriNet,
     Plugin,
+    ResourceAnnotation,
     plugin_method,
 )
 
 from .inputs.dfg import DFGInput
 from .inputs.petri_net import PetriNetInput
+from .resources import TokenBasedReplayResult
 from .util.dfg import compute_ocdfg
-from .util.petri_net import convert_flat_pm4py_to_ocpn
+from .util.petri_net import convert_flat_pm4py_to_ocpn, extract_tbr_results
 
 
 class Pm4pyDiscovery(Plugin):
@@ -28,7 +30,7 @@ class Pm4pyDiscovery(Plugin):
         self,
         ocel: Annotated[OCEL, OCELAnnotation(label="Event Log")],
         input: PetriNetInput,
-    ) -> PetriNet:
+    ) -> Annotated[PetriNet, ResourceAnnotation(label="result", annotation_resources=[TokenBasedReplayResult])]:
         filtered_ocel = ocel.apply_filter(
             filters={
                 "event_type": EventTypeFilter(event_types=input.excluded_event_types, mode="exclude"),
@@ -41,7 +43,9 @@ class Pm4pyDiscovery(Plugin):
             diagnostics_with_tbr=input.enable_token_based_replay,
         )
 
-        petri_net = convert_flat_pm4py_to_ocpn(petri_net["petri_nets"])
+        petri_net = convert_flat_pm4py_to_ocpn(
+            flat_nets=petri_net["petri_nets"], tbr_results=extract_tbr_results(petri_net["tbr_results"])
+        )
 
         return petri_net
 
