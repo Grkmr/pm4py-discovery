@@ -3,7 +3,7 @@ from typing import Literal
 
 from ocelescope import PetriNet
 from ocelescope.plugin import OCEL_FIELD, PluginInput
-from ocelescope.resource.default.petri_net import Annotated, Arc, Place, Transition
+from ocelescope.resource.default.petri_net import Arc, Place, Transition
 from pm4py.objects.petri_net.obj import PetriNet as PMNet
 from pydantic.fields import Field
 
